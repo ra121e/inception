@@ -1,0 +1,89 @@
+version: '3.7' # Docker Composeの安定版を使用
+
+# --------------------------
+# サービス定義 (コンテナ)
+# --------------------------
+services:
+  # 1. MariaDB データベースコンテナ
+  mariadb:
+    container_name: mariadb
+    build:
+      context: ./requirements/mariadb # Dockerfileへのパス
+    image: mariadb # イメージ名とサービス名を一致させる [cite: 77]
+    # ボリュームマウント: データベースの永続化
+    volumes:
+      # ホストマシンの '/home/${LOGIN}/data' にボリュームがあることの要件に対応するため、
+      # 'local'ボリューム定義を使用するか、単にDocker管理のボリュームを使用します。
+      # ここではDocker管理のボリュームを使用し、ホストパスは別途設定（ホストのシンボリックリンクなどで）
+      mariadb_volume: /var/lib/mysql
+    # 環境変数: データベース名と認証情報を .env ファイルからロード
+    env_file:
+      - .env
+    # ネットワーク接続: NGINXやWordPressと通信するためのネットワークに接続
+    networks:
+      - inception_network
+    # クラッシュ時に自動的に再起動 [cite: 92]
+    restart: unless-stopped
+    # 外部公開ポートは不要 (NGINXが唯一のエントリポイント [cite: 118])
+
+  # 2. WordPress + PHP-FPM コンテナ
+  wordpress:
+    container_name: wordpress
+    build:
+      context: ./requirements/wordpress # Dockerfileへのパス
+    image: wordpress # イメージ名とサービス名を一致させる [cite: 77]
+    # ボリュームマウント: ウェブサイトファイルの永続化
+    volumes:
+      wordpress_volume: /var/www/html/wordpress
+    # 環境変数: データベース接続情報などを .env ファイルからロード
+    env_file:
+      - .env
+    # ネットワーク接続
+    networks:
+      - inception_network
+    # 依存関係: MariaDBが起動してからWordPressを起動
+    depends_on:
+      - mariadb
+    # クラッシュ時に自動的に再起動 [cite: 92]
+    restart: unless-stopped
+    # 外部公開ポートは不要 (PHP-FPMは内部ネットワークの9000番ポートでリッスン)
+
+  # 3. NGINX リバースプロキシコンテナ
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx # Dockerfileへのパス
+    image: nginx # イメージ名とサービス名を一致させる [cite: 77]
+    # ボリュームマウント: NGINXがWordPressファイルを提供するために同じボリュームをマウント
+    volumes:
+      wordpress_volume: /var/www/html/wordpress
+    # ポートマッピング: ポート443をホストに公開 (唯一のエントリポイント [cite: 118, 119])
+    ports:
+      - "443:443"
+    # ネットワーク接続
+    networks:
+      - inception_network
+    # 依存関係: WordPressが起動してからNGINXを起動
+    depends_on:
+      - wordpress
+    # クラッシュ時に自動的に再起動 [cite: 92]
+    restart: unless-stopped
+
+# --------------------------
+# ネットワーク定義
+# --------------------------
+networks:
+  # コンテナ間の接続のためのカスタムブリッジネットワークを定義 [cite: 91, 100]
+  inception_network:
+    [cite_start]driver: bridge # 依存関係: 'network: host' や '--link' は禁止されています [cite: 99]
+
+# --------------------------
+# ボリューム定義 (永続化データ)
+# --------------------------
+volumes:
+  # WordPress データベースファイル用ボリューム [cite: 89]
+  mariadb_volume:
+    name: ${LOGIN}_mariadb_volume
+  # WordPress ウェブサイトファイル用ボリューム [cite: 90]
+  wordpress_volume:
+    name: ${LOGIN}_wordpress_volume
