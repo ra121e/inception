@@ -11,7 +11,7 @@ services:
       context: ./requirements/mariadb
     image: mariadb
     volumes:
-      mariadb_volume: /var/lib/mysql
+      - mariadb_data: /var/lib/mysql
     env_file:
       - .env
     networks:
@@ -26,7 +26,7 @@ services:
       context: ./requirements/wordpress
     image: wordpress
     volumes:
-      wordpress_volume: /var/www/html/wordpress
+      - wordpress_data: /var/www/html/wordpress
     env_file:
       - .env
     networks:
@@ -63,9 +63,20 @@ networks:
 # ボリューム定義 (永続化データ)
 # --------------------------
 volumes:
-  # WordPress データベースファイル用ボリューム [cite: 89]
-  mariadb_volume:
-    name: ${LOGIN}_mariadb_volume
-  # WordPress ウェブサイトファイル用ボリューム [cite: 90]
-  wordpress_volume:
-    name: ${LOGIN}_wordpress_volume
+  # MariaDBのデータ専用ボリューム
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      # ホストの /home/login/data/mariadb ディレクトリをバインド
+      device: /home/${LOGIN}/data/mariadb
+      o: bind
+
+  # WordPressのデータ専用ボリューム
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      # ホストの /home/login/data/wordpress ディレクトリをバインド
+      device: /home/${LOGIN}/data/wordpress
+      o: bind

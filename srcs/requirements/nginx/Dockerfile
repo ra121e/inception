@@ -13,6 +13,4 @@ COPY ./tools/init_ssl.sh /usr/local/bin/init_ssl.sh
 RUN chmod +x /usr/local/bin/init_ssl.sh
 RUN /usr/local/bin/init_ssl.sh
 
-# NGINXはデーモンとして実行されなければならず、'tail -f'などのハックは禁止されています [cite: 94, 95]
-# 'daemon off;'でフォアグラウンドで実行します
 CMD ["nginx", "-g", "daemon off;"]
