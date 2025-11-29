@@ -5,35 +5,35 @@ version: '3.7' # Docker Composeの安定版を使用
 # --------------------------
 services:
   # 1. MariaDB データベースコンテナ
-  mariadb:
-    container_name: mariadb
-    build:
-      context: ./requirements/mariadb
-    image: mariadb
-    volumes:
-      - mariadb_data: /var/lib/mysql
-    env_file:
-      - .env
-    networks:
-      - inception_network
-    restart: unless-stopped
+  # mariadb:
+  #   container_name: mariadb
+  #   build:
+  #     context: ./requirements/mariadb
+  #   image: mariadb
+  #   volumes:
+  #     - mariadb_data:/var/lib/mysql
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - inception_network
+  #   restart: unless-stopped
 
 
   # 2. WordPress + PHP-FPM コンテナ
-  wordpress:
-    container_name: wordpress
-    build:
-      context: ./requirements/wordpress
-    image: wordpress
-    volumes:
-      - wordpress_data: /var/www/html/wordpress
-    env_file:
-      - .env
-    networks:
-      - inception_network
-    depends_on:
-      - mariadb
-    restart: unless-stopped
+  # wordpress:
+  #   container_name: wordpress
+  #   build:
+  #     context: ./requirements/wordpress
+  #   image: wordpress
+  #   volumes:
+  #     - wordpress_data:/var/www/html/wordpress
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - inception_network
+  #   depends_on:
+  #     - mariadb
+  #   restart: unless-stopped
 
   # 3. NGINX リバースプロキシコンテナ
   nginx:
@@ -42,13 +42,13 @@ services:
       context: ./requirements/nginx
     image: nginx
     volumes:
-      wordpress_volume: /var/www/html/wordpress
+      - wordpress_data:/var/www/html/wordpress
     ports:
-      - "443:443"
+      - "8443:443"
     networks:
       - inception_network
-    depends_on:
-      - wordpress
+    # depends_on:
+    #   - wordpress
     restart: unless-stopped
 
 # --------------------------
@@ -64,13 +64,13 @@ networks:
 # --------------------------
 volumes:
   # MariaDBのデータ専用ボリューム
-  mariadb_data:
-    driver: local
-    driver_opts:
-      type: none
-      # ホストの /home/login/data/mariadb ディレクトリをバインド
-      device: /home/${LOGIN}/data/mariadb
-      o: bind
+  # mariadb_data:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     # ホストの /home/login/data/mariadb ディレクトリをバインド
+  #     device: /home/${LOGIN}/data/mariadb
+  #     o: bind
 
   # WordPressのデータ専用ボリューム
   wordpress_data:
@@ -78,5 +78,5 @@ volumes:
     driver_opts:
       type: none
       # ホストの /home/login/data/wordpress ディレクトリをバインド
-      device: /home/${LOGIN}/data/wordpress
+      device: /home/${LOGIN}/inception/srcs/requirements/wordpress
       o: bind
