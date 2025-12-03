@@ -1,28 +1,54 @@
-FROM alpine:3.18 
+FROM alpine:3.18
 
-# パッケージのインストール: PHP、PHP-FPM、および必要なPHP拡張機能 (MariaDB/MySQL接続用など)
 RUN apk update && \
-    apk add php php-fpm php-mysqli php-json php-session php-curl php-dom php-xml php-mbstring php-zlib \
-    wget bash
+    apk add --no-cache \
+      php81 php81-fpm php81-cli php81-phar php81-mysqli php81-json \
+      php81-session php81-curl php81-dom php81-xml php81-mbstring php81-zlib \
+      bash curl tar
 
-# PHP-FPM設定をコピー (例: www.conf)
-COPY ./conf/www.conf /etc/php8/php-fpm.d/www.conf
+# PHP-FPM 設定
+RUN mkdir -p /run/php
+COPY ./conf/www.conf /etc/php81/php-fpm.d/www.conf
 
-# WordPressのダウンロードとインストール
-RUN wget https://wordpress.org/latest.tar.gz -P /tmp && \
-    tar -xzf /tmp/latest.tar.gz -C /var/www/html/ && \
-    rm /tmp/latest.tar.gz && \
-    chown -R nobody:nobody /var/www/html/wordpress
-
-# WordPress設定スクリプトをコピー
+# WordPress セットアップスクリプト
 COPY ./tools/setup_wordpress.sh /usr/local/bin/setup_wordpress.sh
-
-# スクリプトを実行可能にし、セットアップを実行
 RUN chmod +x /usr/local/bin/setup_wordpress.sh
 
-# /var/www/html/wordpressをWordPressファイルのボリュームとして定義 [cite: 90]
-VOLUME /var/www/html/wordpress
+WORKDIR /var/www/html
 
-# PID 1のベストプラクティスに従い、php-fpmをフォアグラウンドで実行 [cite: 105]
+EXPOSE 9000
+
 ENTRYPOINT ["/usr/local/bin/setup_wordpress.sh"]
-CMD ["/usr/sbin/php-fpm8", "-F"]
+CMD ["php-fpm81", "-F"]
+
+
+
+
+# FROM alpine:3.18 
+
+# # パッケージのインストール: PHP、PHP-FPM、および必要なPHP拡張機能 (MariaDB/MySQL接続用など)
+# RUN apk update && \
+#     apk add php81 php81-fpm php81-cli php81-phar php81-mysqli php81-json php81-session php81-curl \
+#             php81-dom php81-xml php81-mbstring php81-zlib \
+#             bash wget curl openssl
+
+# # PHP-FPM設定をコピー (例: www.conf)
+# COPY ./conf/www.conf /etc/php8.1/php-fpm.d/www.conf
+
+# # # WordPressのダウンロードとインストール
+# # RUN mkdir -p /var/www/html && \
+# #     wget https://wordpress.org/latest.tar.gz -P /tmp && \
+# #     tar -xzf /tmp/latest.tar.gz -C /tmp && \
+# #     mv /tmp/wordpress /var/www/html/wordpress && \
+# #     rm /tmp/latest.tar.gz && \
+# #     chown -R nobody:nobody /var/www/html/wordpress
+
+# # WordPress設定スクリプトをコピー
+# COPY ./tools/setup_wordpress.sh /usr/local/bin/setup_wordpress.sh
+
+# # スクリプトを実行可能にし、セットアップを実行
+# RUN chmod +x /usr/local/bin/setup_wordpress.sh
+
+# # PID 1のベストプラクティスに従い、php-fpmをフォアグラウンドで実行 [cite: 105]
+# ENTRYPOINT ["/usr/local/bin/setup_wordpress.sh"]
+# CMD ["/usr/sbin/php-fpm81", "-F"]

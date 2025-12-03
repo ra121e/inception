@@ -1,82 +1,160 @@
-version: '3.7' # Docker Composeの安定版を使用
+version: '3.7'
 
-# --------------------------
-# サービス定義 (コンテナ)
-# --------------------------
 services:
-  # 1. MariaDB データベースコンテナ
-  # mariadb:
-  #   container_name: mariadb
-  #   build:
-  #     context: ./requirements/mariadb
-  #   image: mariadb
-  #   volumes:
-  #     - mariadb_data:/var/lib/mysql
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - inception_network
-  #   restart: unless-stopped
+  mariadb:
+    container_name: mariadb
+    build:
+      context: ./requirements/mariadb
+    image: mariadb:alpine-3.18
+    env_file:
+      - .env
+    secrets:
+      - db_root_password
+      - db_password
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - inception_network
+    restart: unless-stopped
 
+  wordpress:
+    container_name: wordpress
+    build:
+      context: ./requirements/wordpress
+    image: wordpress:alpine-3.18
+    env_file:
+      - .env
+    secrets:
+      - db_password
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception_network
+    depends_on:
+      - mariadb
+    restart: unless-stopped
 
-  # 2. WordPress + PHP-FPM コンテナ
-  # wordpress:
-  #   container_name: wordpress
-  #   build:
-  #     context: ./requirements/wordpress
-  #   image: wordpress
-  #   volumes:
-  #     - wordpress_data:/var/www/html/wordpress
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - inception_network
-  #   depends_on:
-  #     - mariadb
-  #   restart: unless-stopped
-
-  # 3. NGINX リバースプロキシコンテナ
   nginx:
     container_name: nginx
     build:
       context: ./requirements/nginx
-    image: nginx
+    image: nginx:alpine-3.18
+    env_file:
+      - .env
     volumes:
-      - wordpress_data:/var/www/html/wordpress
+      - wordpress_data:/var/www/html
     ports:
-      - "8443:443"
+      - "443:443"
     networks:
       - inception_network
-    # depends_on:
-    #   - wordpress
+    depends_on:
+      - wordpress
     restart: unless-stopped
 
-# --------------------------
-# ネットワーク定義
-# --------------------------
 networks:
-  # コンテナ間の接続のためのカスタムブリッジネットワークを定義 [cite: 91, 100]
   inception_network:
-    driver: bridge # 依存関係: 'network: host' や '--link' は禁止されています [cite: 99]
+    driver: bridge
 
-# --------------------------
-# ボリューム定義 (永続化データ)
-# --------------------------
 volumes:
-  # MariaDBのデータ専用ボリューム
-  # mariadb_data:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     # ホストの /home/login/data/mariadb ディレクトリをバインド
-  #     device: /home/${LOGIN}/data/mariadb
-  #     o: bind
-
-  # WordPressのデータ専用ボリューム
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/${LOGIN}/data/mariadb
+      o: bind
   wordpress_data:
     driver: local
     driver_opts:
       type: none
-      # ホストの /home/login/data/wordpress ディレクトリをバインド
-      device: /home/${LOGIN}/inception/srcs/requirements/wordpress
+      device: /home/${LOGIN}/data/wordpress
       o: bind
+
+secrets:
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  db_password:
+    file: ../secrets/db_password.txt
+
+
+# version: '3.7' # Docker Composeの安定版を使用
+
+# # --------------------------
+# # サービス定義 (コンテナ)
+# # --------------------------
+# services:
+#   # 1. MariaDB データベースコンテナ
+#   # mariadb:
+#   #   container_name: mariadb
+#   #   build:
+#   #     context: ./requirements/mariadb
+#   #   image: mariadb
+#   #   volumes:
+#   #     - mariadb_data:/var/lib/mysql
+#   #   env_file:
+#   #     - .env
+#   #   networks:
+#   #     - inception_network
+#   #   restart: unless-stopped
+
+
+#   # 2. WordPress + PHP-FPM コンテナ
+#   wordpress:
+#     container_name: wordpress
+#     build:
+#       context: ./requirements/wordpress
+#     image: wordpress
+#     volumes:
+#       - wordpress_data:/var/www/html/wordpress
+#     env_file:
+#       - .env
+#     networks:
+#       - inception_network
+#   #   depends_on:
+#   #     - mariadb
+#   #   restart: unless-stopped
+
+#   # 3. NGINX リバースプロキシコンテナ
+#   nginx:
+#     container_name: nginx
+#     build:
+#       context: ./requirements/nginx
+#     image: nginx
+#     volumes:
+#       - wordpress_data:/var/www/html/wordpress
+#     ports:
+#       - "8443:443"
+#     networks:
+#       - inception_network
+#     # depends_on:
+#     #   - wordpress
+#     restart: unless-stopped
+
+# # --------------------------
+# # ネットワーク定義
+# # --------------------------
+# networks:
+#   # コンテナ間の接続のためのカスタムブリッジネットワークを定義 [cite: 91, 100]
+#   inception_network:
+#     driver: bridge # 依存関係: 'network: host' や '--link' は禁止されています [cite: 99]
+
+# # --------------------------
+# # ボリューム定義 (永続化データ)
+# # --------------------------
+# volumes:
+#   # MariaDBのデータ専用ボリューム
+#   # mariadb_data:
+#   #   driver: local
+#   #   driver_opts:
+#   #     type: none
+#   #     # ホストの /home/login/data/mariadb ディレクトリをバインド
+#   #     device: /home/${LOGIN}/data/mariadb
+#   #     o: bind
+
+#   # WordPressのデータ専用ボリューム
+#   wordpress_data:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       # ホストの /home/login/data/wordpress ディレクトリをバインド
+#       device: /home/${LOGIN}/inception/srcs/requirements/wordpress
+#       o: bind

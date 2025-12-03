@@ -1,0 +1,30 @@
+*
+!Dockerfile
+!docker-compose.yml
+!requirements/
+!tools/
+!.gitignore
+!.env
+!.htpasswd
+!.htpasswd_admin
+!srcs/requirements/nginx/conf/nginx.conf
+!srcs/requirements/mariadb/conf/my.cnf
+!srcs/requirements/wordpress/conf/wp-config.php
+
+# Except the ones specified above
+# Ignore swap files
+*.swp
+# Ignore macOS system files
+.DS_Store
+# Ignore log files
+*.log
+# Ignore temporary files
+tmp/
+temp/
+# Ignore backup files
+*~
+
+# Ignore secrets
+secrets/credentials.txt
+secrets/db_password.txt
+secrets/db_root_password.txt
