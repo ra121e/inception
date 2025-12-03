@@ -1,14 +1,20 @@
 [mysqld]
 user = mysql
 datadir = /var/lib/mysql
+
+# 他コンテナからの TCP 接続を受ける
 bind-address = 0.0.0.0
 port = 3306
+
+# ソケットパスを明示
+socket = /run/mysqld/mysqld.sock
 
 # 推奨オプション
 character-set-server = utf8mb4
 collation-server = utf8mb4_unicode_ci
 skip-networking = 0
-skip-name-resolve
+skip-name-resolve = 1
 
 [client]
 default-character-set = utf8mb4
+socket = /run/mysqld/mysqld.sock
