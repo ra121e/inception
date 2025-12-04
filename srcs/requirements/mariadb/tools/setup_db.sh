@@ -19,6 +19,9 @@ fi
 MYSQL_ROOT_PASSWORD=$(cat "${ROOT_PWD_FILE}")
 MYSQL_USER_PASSWORD=$(cat "${USER_PWD_FILE}")
 
+
+
+
 # 環境変数からWP用のDB名とユーザー名を取得 (.env で定義している想定)
 MYSQL_DATABASE="${MYSQL_DATABASE:-wordpress}"
 MYSQL_USER="${MYSQL_USER:-wpuser}"
