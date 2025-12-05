@@ -3,7 +3,7 @@ set -e
 
 WP_PATH="/var/www/html/wordpress"
 
-# DB 接続情報
+# DB 接続情報（.env と secrets から）
 DB_HOST=${DB_HOST:-mariadb}
 DB_PORT=${DB_PORT:-3306}
 DB_NAME=${MYSQL_DATABASE:-wordpress}
@@ -15,23 +15,6 @@ if [ ! -f "${DB_PWD_FILE}" ]; then
   exit 1
 fi
 DB_PASSWORD=$(cat "${DB_PWD_FILE}")
-
-# 管理者 / 一般ユーザのパスワードを credentials.txt から読む想定
-CRED_FILE="/run/secrets/credentials"
-WP_ADMIN_PASS=""
-WP_USER_PASS=""
-
-if [ -f "${CRED_FILE}" ]; then
-  # 例: 1行目=admin pass, 2行目=user pass
-  WP_ADMIN_PASS=$(sed -n '1p' "${CRED_FILE}")
-  WP_USER_PASS=$(sed -n '2p' "${CRED_FILE}")
-fi
-
-WP_TITLE=${WP_TITLE:-"Inception Blog"}
-WP_ADMIN_USER=${WP_ADMIN_USER:-"superboss"}   # admin 文字列を避ける
-WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL:-"admin@example.com"}
-WP_USER=${WP_USER:-"normaluser"}
-WP_USER_EMAIL=${WP_USER_EMAIL:-"user@example.com"}
 
 mkdir -p /var/www/html
 
@@ -46,28 +29,38 @@ if [ ! -f "${WP_PATH}/wp-config.php" ]; then
 
   cd "${WP_PATH}"
 
-  echo "Creating wp-config.php..."
-  cp wp-config-sample.php wp-config.php
-  sed -i "s/database_name_here/${DB_NAME}/" wp-config.php
-  sed -i "s/username_here/${DB_USER}/" wp-config.php
-  sed -i "s/password_here/${DB_PASSWORD}/" wp-config.php
-  sed -i "s/localhost/${DB_HOST}/" wp-config.php
+  echo "Creating wp-config.php (custom minimal)..."
 
-  # ユニークキー・ソルトを自動設定
-  php -r "copy('https://api.wordpress.org/secret-key/1.1/salt/', 'salt.txt');"
-  sed -i '/AUTH_KEY/d' wp-config.php
-  sed -i '/SECURE_AUTH_KEY/d' wp-config.php
-  sed -i '/LOGGED_IN_KEY/d' wp-config.php
-  sed -i '/NONCE_KEY/d' wp-config.php
-  sed -i '/AUTH_SALT/d' wp-config.php
-  sed -i '/SECURE_AUTH_SALT/d' wp-config.php
-  sed -i '/LOGGED_IN_SALT/d' wp-config.php
-  sed -i '/NONCE_SALT/d' wp-config.php
-  cat salt.txt >> wp-config.php
-  rm -f salt.txt
+  # ユニークキー・ソルトを取得して変数に保持
+  SALT=$(php -r "echo file_get_contents('https://api.wordpress.org/secret-key/1.1/salt/');")
 
-  # WordPress CLI がない前提なら、ここでは DB が準備できたら手動セットアップでも可。
-  # もし wp-cli を使うなら apk add + 自動インストール処理をここに追加。
+  cat > wp-config.php <<EOF
+<?php
+define( 'DB_NAME', '${DB_NAME}' );
+define( 'DB_USER', '${DB_USER}' );
+define( 'DB_PASSWORD', '${DB_PASSWORD}' );
+define( 'DB_HOST', '${DB_HOST}:${DB_PORT}' );
+define( 'DB_CHARSET', 'utf8mb4' );
+define( 'DB_COLLATE', '' );
+
+${SALT}
+
+\$table_prefix = 'wp_';
+
+define( 'WP_DEBUG', false );
+
+define( 'WP_HOME', 'https://localhost:8443' );
+define( 'WP_SITEURL', 'https://localhost:8443' );
+define( 'FORCE_SSL_ADMIN', true );
+if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    \$_SERVER['HTTPS'] = 'on';
+}
+
+if ( ! defined( 'ABSPATH' ) ) {
+    define( 'ABSPATH', __DIR__ . '/' );
+}
+require_once ABSPATH . 'wp-settings.php';
+EOF
 fi
 
 echo "Starting php-fpm..."

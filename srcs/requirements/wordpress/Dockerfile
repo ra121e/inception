@@ -5,6 +5,9 @@ RUN apk update && \
       php81 php81-fpm php81-cli php81-phar php81-mysqli php81-json \
       php81-session php81-curl php81-dom php81-xml php81-mbstring php81-zlib \
       bash curl tar
+RUN mkdir -p /var/lib/php81/sessions && \
+    chown -R nobody:nobody /var/lib/php81/sessions && \
+    echo "session.save_path = /var/lib/php81/sessions" >> /etc/php81/php.ini
 
 # PHP-FPM 設定
 RUN mkdir -p /run/php
@@ -24,7 +27,7 @@ CMD ["php-fpm81", "-F"]
 
 
 
-# FROM alpine:3.18 
+# FROM alpine:3.18
 
 # # パッケージのインストール: PHP、PHP-FPM、および必要なPHP拡張機能 (MariaDB/MySQL接続用など)
 # RUN apk update && \
