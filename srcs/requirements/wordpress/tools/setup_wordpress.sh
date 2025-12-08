@@ -49,7 +49,7 @@ ${SALT}
 
 define( 'WP_DEBUG', false );
 
-define( 'WP_HOME', https://${DOMAIN_NAME} );
+define( 'WP_HOME', 'https://${DOMAIN_NAME}' );
 define( 'WP_SITEURL', 'https://${DOMAIN_NAME}' );
 define( 'FORCE_SSL_ADMIN', true );
 if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
