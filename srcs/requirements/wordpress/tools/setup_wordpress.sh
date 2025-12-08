@@ -49,8 +49,8 @@ ${SALT}
 
 define( 'WP_DEBUG', false );
 
-define( 'WP_HOME', 'https://localhost:8443' );
-define( 'WP_SITEURL', 'https://localhost:8443' );
+define( 'WP_HOME', 'https://localhost' );
+define( 'WP_SITEURL', 'https://localhost' );
 define( 'FORCE_SSL_ADMIN', true );
 if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     \$_SERVER['HTTPS'] = 'on';
