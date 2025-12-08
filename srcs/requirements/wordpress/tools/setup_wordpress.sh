@@ -19,51 +19,76 @@ if [ ! -f "${DB_PWD_FILE}" ]; then
 fi
 DB_PASSWORD=$(cat "${DB_PWD_FILE}")
 
-mkdir -p /var/www/html
+# credentials.txt から管理者/一般ユーザのパスワードを取得（1 行目 admin, 2 行目 user）
+CRED_FILE="/run/secrets/credentials"
+WP_ADMIN_PASS=""
+WP_USER_PASS=""
+if [ -f "${CRED_FILE}" ]; then
+  WP_ADMIN_PASS=$(sed -n '1p' "${CRED_FILE}")
+  WP_USER_PASS=$(sed -n '2p' "${CRED_FILE}")
+fi
 
-if [ ! -f "${WP_PATH}/wp-config.php" ]; then
-  echo "Downloading WordPress..."
-  TMP_FILE="/tmp/wordpress.tar.gz"
-  curl -fSL https://wordpress.org/latest.tar.gz -o "${TMP_FILE}"
-  tar -xzf "${TMP_FILE}" -C /var/www/html
-  rm -f "${TMP_FILE}"
+# .env から WordPress 用の各種情報
+WP_TITLE=${WP_TITLE:-"Inception Blog"}
+WP_ADMIN_USER=${WP_ADMIN_USER:-"superboss"}
+WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL:-"admin@example.com"}
+WP_USER_NAME=${WP_USER:-"normaluser"}
+WP_USER_EMAIL=${WP_USER_EMAIL:-"user@example.com"}
 
-  chown -R nobody:nobody /var/www/html
+WP_URL="https://${DOMAIN_NAME}"
 
-  cd "${WP_PATH}"
+mkdir -p "${WP_PATH}"
+cd "${WP_PATH}"
 
-  echo "Creating wp-config.php (custom minimal)..."
+# すでにインストール済みかどうか
+if ! wp core is-installed --allow-root >/dev/null 2>&1; then
+  echo "[wp-setup] Downloading WordPress via wp-cli..."
+  wp core download --allow-root
 
-  # ユニークキー・ソルトを取得して変数に保持
-  SALT=$(php -r "echo file_get_contents('https://api.wordpress.org/secret-key/1.1/salt/');")
+  echo "[wp-setup] Creating wp-config.php via wp-cli..."
+  wp config create \
+    --dbname="${DB_NAME}" \
+    --dbuser="${DB_USER}" \
+    --dbpass="${DB_PASSWORD}" \
+    --dbhost="${DB_HOST}:${DB_PORT}" \
+    --allow-root
 
-  cat > wp-config.php <<EOF
-<?php
-define( 'DB_NAME', '${DB_NAME}' );
-define( 'DB_USER', '${DB_USER}' );
-define( 'DB_PASSWORD', '${DB_PASSWORD}' );
-define( 'DB_HOST', '${DB_HOST}:${DB_PORT}' );
-define( 'DB_CHARSET', 'utf8mb4' );
-define( 'DB_COLLATE', '' );
+  echo "[wp-setup] Running core install..."
+  wp core install \
+    --url="${WP_URL}" \
+    --title="${WP_TITLE}" \
+    --admin_user="${WP_ADMIN_USER}" \
+    --admin_password="${WP_ADMIN_PASS}" \
+    --admin_email="${WP_ADMIN_EMAIL}" \
+    --skip-email \
+    --allow-root
 
-${SALT}
+  if [ -n "${WP_USER_NAME}" ] && [ -n "${WP_USER_EMAIL}" ] && [ -n "${WP_USER_PASS}" ]; then
+    echo "[wp-setup] Creating regular user ${WP_USER_NAME}..."
+    wp user create "${WP_USER_NAME}" "${WP_USER_EMAIL}" \
+      --user_pass="${WP_USER_PASS}" \
+      --role=contributor \
+      --allow-root
+  fi
 
-\$table_prefix = 'wp_';
+  # URL や HTTPS 関連は wp-cli で更新
+  wp option update home "${WP_URL}" --allow-root
+  wp option update siteurl "${WP_URL}" --allow-root
 
-define( 'WP_DEBUG', false );
+  # HTTPS を強制するための定数を wp-config.php に追記
+  wp config set FORCE_SSL_ADMIN true --raw --type=constant --allow-root
+  wp config set WP_HOME "${WP_URL}" --type=constant --allow-root
+  wp config set WP_SITEURL "${WP_URL}" --type=constant --allow-root
 
-define( 'WP_HOME', 'https://${DOMAIN_NAME}' );
-define( 'WP_SITEURL', 'https://${DOMAIN_NAME}' );
-define( 'FORCE_SSL_ADMIN', true );
-if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    \$_SERVER['HTTPS'] = 'on';
-}
-
-if ( ! defined( 'ABSPATH' ) ) {
-    define( 'ABSPATH', __DIR__ . '/' );
-}
-require_once ABSPATH . 'wp-settings.php';
-EOF
+  # X-Forwarded-Proto 経由で HTTPS を認識させるための追記
+  php -r '
+    $file = "wp-config.php";
+    $cfg = file_get_contents($file);
+    $needle = "require_once ABSPATH . \'wp-settings.php\';";
+    $insert = "if (isset(\$_SERVER[\"HTTP_X_FORWARDED_PROTO\"]) && \$_SERVER[\"HTTP_X_FORWARDED_PROTO\"] === \"https\") {\n    \$_SERVER[\"HTTPS\"] = \"on\";\n}\n\n" . $needle;
+    $cfg = str_replace($needle, $insert, $cfg);
+    file_put_contents($file, $cfg);
+  ' || echo "[wp-setup] wp-config.php HTTPS patch failed (already applied?)"
 fi
 
 echo "Starting php-fpm..."
