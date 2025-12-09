@@ -40,8 +40,8 @@ clean: down
 	docker network rm $$(docker network ls -q) || true
 
 fclean: clean
-	if [ -d "$(DATA_DIR_MARIADB)" ]; then rm -rf "$(DATA_DIR_MARIADB)"; fi
-	if [ -d "$(DATA_DIR_WORDPRESS)" ]; then rm -rf "$(DATA_DIR_WORDPRESS)"; fi
+	if [ -d "$(DATA_DIR_MARIADB)" ]; then sudo rm -rf "$(DATA_DIR_MARIADB)"; fi
+	if [ -d "$(DATA_DIR_WORDPRESS)" ]; then sudo rm -rf "$(DATA_DIR_WORDPRESS)"; fi
 
 re: fclean
 	$(DC) -f $(DC_FILE) up -d --build
