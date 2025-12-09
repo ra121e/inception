@@ -10,6 +10,9 @@
 !srcs/requirements/nginx/conf/nginx.conf
 !srcs/requirements/mariadb/conf/my.cnf
 !srcs/requirements/wordpress/conf/wp-config.php
+!README.md
+!USER_DOC.md
+!DEV_DOC.md
 
 # Except the ones specified above
 # Ignore swap files
