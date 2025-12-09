@@ -81,14 +81,15 @@ if ! wp core is-installed --allow-root >/dev/null 2>&1; then
   wp config set WP_SITEURL "${WP_URL}" --type=constant --allow-root
 
   # X-Forwarded-Proto 経由で HTTPS を認識させるための追記
-  php -r '
-    $file = "wp-config.php";
-    $cfg = file_get_contents($file);
-    $needle = "require_once ABSPATH . \'wp-settings.php\';";
-    $insert = "if (isset(\$_SERVER[\"HTTP_X_FORWARDED_PROTO\"]) && \$_SERVER[\"HTTP_X_FORWARDED_PROTO\"] === \"https\") {\n    \$_SERVER[\"HTTPS\"] = \"on\";\n}\n\n" . $needle;
-    $cfg = str_replace($needle, $insert, $cfg);
-    file_put_contents($file, $cfg);
-  ' || echo "[wp-setup] wp-config.php HTTPS patch failed (already applied?)"
+  php <<'PHP'
+<?php
+$file = 'wp-config.php';
+$cfg = file_get_contents($file);
+$needle = "require_once ABSPATH . 'wp-settings.php';";
+$insert = "if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {\n    \$_SERVER['HTTPS'] = 'on';\n}\n\n" . $needle;
+$cfg = str_replace($needle, $insert, $cfg);
+file_put_contents($file, $cfg);
+PHP
 fi
 
 echo "Starting php-fpm..."

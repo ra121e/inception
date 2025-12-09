@@ -6,10 +6,11 @@ RUN apk update && \
       php81-session php81-curl php81-dom php81-xml php81-mbstring php81-zlib \
       bash curl tar
 
-# PHP セッション保存先
+# PHP セッション保存先 + メモリ制限
 RUN mkdir -p /var/lib/php81/sessions && \
     chown -R nobody:nobody /var/lib/php81/sessions && \
-    echo "session.save_path = /var/lib/php81/sessions" >> /etc/php81/php.ini
+    echo "session.save_path = /var/lib/php81/sessions" >> /etc/php81/php.ini && \
+    echo "memory_limit = 256M" >> /etc/php81/php.ini
 
 # PHP-FPM 設定
 RUN mkdir -p /run/php

@@ -26,8 +26,9 @@ services:
       - .env
     secrets:
       - db_password
+      - credentials
     volumes:
-      - wordpress_data:/var/www/html
+      - wordpress_data:/var/www/html/wordpress
     networks:
       - inception_network
     depends_on:
@@ -42,7 +43,7 @@ services:
     env_file:
       - .env
     volumes:
-      - wordpress_data:/var/www/html
+      - wordpress_data:/var/www/html/wordpress
     ports:
       - "443:443"
     networks:
@@ -76,7 +77,8 @@ secrets:
     file: ../secrets/db_root_password.txt
   db_password:
     file: ../secrets/db_password.txt
-
+  credentials:
+    file: ../secrets/credentials.txt
 
 # version: '3.7' # Docker Composeの安定版を使用
 
