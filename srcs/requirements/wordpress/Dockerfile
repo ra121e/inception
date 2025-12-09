@@ -4,6 +4,7 @@ RUN apk update && \
     apk add --no-cache \
       php81 php81-fpm php81-cli php81-phar php81-mysqli php81-json \
       php81-session php81-curl php81-dom php81-xml php81-mbstring php81-zlib \
+      php81-ctype \
       bash curl tar
 
 # PHP セッション保存先 + メモリ制限
