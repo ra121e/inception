@@ -2,20 +2,20 @@ FROM alpine:3.23
 
 RUN apk update && \
     apk add --no-cache \
-      php81 php81-fpm php81-cli php81-phar php81-mysqli php81-json \
-      php81-session php81-curl php81-dom php81-xml php81-mbstring php81-zlib \
-      php81-ctype \
+      php83 php83-fpm php83-cli php83-phar php83-mysqli php83-json \
+      php83-session php83-curl php83-dom php83-xml php83-mbstring php83-zlib \
+      php83-ctype \
       bash curl tar
 
 # PHP セッション保存先 + メモリ制限
-RUN mkdir -p /var/lib/php81/sessions && \
-    chown -R nobody:nobody /var/lib/php81/sessions && \
-    echo "session.save_path = /var/lib/php81/sessions" >> /etc/php81/php.ini && \
-    echo "memory_limit = 256M" >> /etc/php81/php.ini
+RUN mkdir -p /var/lib/php83/sessions && \
+    chown -R nobody:nobody /var/lib/php83/sessions && \
+    echo "session.save_path = /var/lib/php83/sessions" >> /etc/php83/php.ini && \
+    echo "memory_limit = 256M" >> /etc/php83/php.ini
 
 # PHP-FPM 設定
 RUN mkdir -p /run/php
-COPY ./conf/www.conf /etc/php81/php-fpm.d/www.conf
+COPY ./conf/www.conf /etc/php83/php-fpm.d/www.conf
 
 # wp-cli 本体をインストール
 RUN curl -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
