@@ -50,6 +50,11 @@ if ! wp core is-installed --allow-root >/dev/null 2>&1; then
   echo "[wp-setup] Downloading WordPress via wp-cli..."
   wp core download --allow-root
 
+  # ダウンロード直後に権限を PHP-FPM に合わせる
+  chown -R nobody:nobody "${WP_PATH}"
+  find "${WP_PATH}" -type d -exec chmod 755 {} \;
+  find "${WP_PATH}" -type f -exec chmod 644 {} \;
+
   echo "[wp-setup] Creating wp-config.php via wp-cli..."
   wp config create \
     --dbname="${DB_NAME}" \
