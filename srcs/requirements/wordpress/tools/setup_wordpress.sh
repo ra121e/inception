@@ -6,7 +6,8 @@ WP_PATH="/var/www/html/wordpress"
 # --- 追加: ボリュームマウント時に権限を PHP-FPM に合わせる ---
 mkdir -p "${WP_PATH}"
 chown -R nobody:nobody "${WP_PATH}"
-chmod -R 755 "${WP_PATH}"
+find "${WP_PATH}" -type d -exec chmod 755 {} \;
+find "${WP_PATH}" -type f -exec chmod 644 {} \;
 
 # .env から来る DOMAIN_NAME。なければ localhost にする
 DOMAIN_NAME=${DOMAIN_NAME:-localhost}
@@ -42,7 +43,6 @@ WP_USER_EMAIL=${WP_USER_EMAIL:-"user@example.com"}
 
 WP_URL="https://${DOMAIN_NAME}"
 
-mkdir -p "${WP_PATH}"
 cd "${WP_PATH}"
 
 # すでにインストール済みかどうか
