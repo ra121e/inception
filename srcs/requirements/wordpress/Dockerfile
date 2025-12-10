@@ -4,7 +4,7 @@ RUN apk update && \
     apk add --no-cache \
       php83 php83-fpm php83-cli php83-phar php83-mysqli php83-json \
       php83-session php83-curl php83-dom php83-xml php83-mbstring php83-zlib \
-      php83-ctype php83-tokenizer \
+      php83-ctype php83-tokenizer php83-gd \
       bash curl tar
 
 # PHP セッション保存先 + メモリ制限
