@@ -3,6 +3,11 @@ set -e
 
 WP_PATH="/var/www/html/wordpress"
 
+# --- 追加: ボリュームマウント時に権限を PHP-FPM に合わせる ---
+mkdir -p "${WP_PATH}"
+chown -R nobody:nobody "${WP_PATH}"
+chmod -R 755 "${WP_PATH}"
+
 # .env から来る DOMAIN_NAME。なければ localhost にする
 DOMAIN_NAME=${DOMAIN_NAME:-localhost}
 
