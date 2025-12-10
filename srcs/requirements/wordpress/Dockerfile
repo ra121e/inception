@@ -10,11 +10,12 @@ RUN apk update && \
 # PHP セッション保存先 + メモリ制限
 RUN mkdir -p /var/lib/php83/sessions && \
     chown -R nobody:nobody /var/lib/php83/sessions && \
+    ln -s /usr/bin/php83 /usr/local/bin/php && \
     echo "session.save_path = /var/lib/php83/sessions" >> /etc/php83/php.ini && \
     echo "memory_limit = 256M" >> /etc/php83/php.ini
 
 # PHP-FPM 設定
-RUN mkdir -p /run/php
+RUN mkdir -p /run/php83
 COPY ./conf/www.conf /etc/php83/php-fpm.d/www.conf
 
 # wp-cli 本体をインストール
@@ -30,7 +31,7 @@ WORKDIR /var/www/html
 EXPOSE 9000
 
 ENTRYPOINT ["/usr/local/bin/setup_wordpress.sh"]
-CMD ["php-fpm81", "-F"]
+CMD ["php-fpm83", "-F"]
 
 
 
