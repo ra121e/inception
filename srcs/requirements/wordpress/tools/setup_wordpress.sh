@@ -84,6 +84,7 @@ if ! wp core is-installed --allow-root >/dev/null 2>&1; then
   wp config set FORCE_SSL_ADMIN true --raw --type=constant --allow-root
   wp config set WP_HOME "${WP_URL}" --type=constant --allow-root
   wp config set WP_SITEURL "${WP_URL}" --type=constant --allow-root
+  wp config set FS_METHOD direct --type=constant --allow-root
 
   # X-Forwarded-Proto 経由で HTTPS を認識させるための追記
   php <<'PHP'
