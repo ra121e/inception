@@ -15,6 +15,8 @@ all: dir up
 dir:
 	mkdir -p $(DATA_DIR_MARIADB)
 	mkdir -p $(DATA_DIR_WORDPRESS)
+	sudo chown -R 65534:65534 $(DATA_DIR_WORDPRESS)
+	sudo chmod -R 755 $(DATA_DIR_WORDPRESS)
 
 up:
 	$(DC) -f $(DC_FILE) up -d --build
