@@ -8,7 +8,8 @@ This project deploys a small web stack using Docker and Docker Compose. As an en
 - A MariaDB database storing the WordPress data.
 - NGINX as a reverse proxy and single entrypoint to the stack.
 
-All services run as containers and share data using bind-mounted volumes under `/home/LOGIN/data` on the host (replace `LOGIN` with the actual 42 login, e.g. `athonda`).
+All services run as containers and share data using bind-mounted volumes under `/home/LOGIN/data` on the host (replace `LOGIN` with the actual users who clone this repository and deploy the service on their own environment.)
+
 
 ## Services Provided
 
@@ -33,8 +34,6 @@ All commands are executed from the project root directory.
 
 ```bash
 make
-# or
-make up
 ```
 
 This will:
