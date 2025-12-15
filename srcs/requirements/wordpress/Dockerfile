@@ -7,9 +7,12 @@ RUN apk update && \
       php83-ctype php83-tokenizer php83-gd \
       bash curl tar
 
+# --- PHP-FPM 用ユーザー作成 ---
+RUN addgroup -S www && adduser -S -G www www
+
 # PHP セッション保存先 + メモリ制限
 RUN mkdir -p /var/lib/php83/sessions && \
-    chown -R nobody:nobody /var/lib/php83/sessions && \
+    chown -R www:www /var/lib/php83/sessions && \
     ln -s /usr/bin/php83 /usr/local/bin/php && \
     echo "session.save_path = /var/lib/php83/sessions" >> /etc/php83/php.ini && \
     echo "memory_limit = 256M" >> /etc/php83/php.ini

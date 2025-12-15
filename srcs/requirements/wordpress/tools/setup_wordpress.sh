@@ -2,12 +2,11 @@
 set -e
 
 WP_PATH="/var/www/html/wordpress"
+PHP_FPM_USER="www"
+PHP_FPM_GROUP="www"
 
 # --- 追加: ボリュームマウント時に権限を PHP-FPM に合わせる ---
 mkdir -p "${WP_PATH}"
-chown -R nobody:nobody "${WP_PATH}"
-find "${WP_PATH}" -type d -exec chmod 755 {} \;
-find "${WP_PATH}" -type f -exec chmod 644 {} \;
 
 # .env から来る DOMAIN_NAME。なければ localhost にする
 DOMAIN_NAME=${DOMAIN_NAME:-localhost}
@@ -50,10 +49,10 @@ if ! wp core is-installed --allow-root >/dev/null 2>&1; then
   echo "[wp-setup] Downloading WordPress via wp-cli..."
   wp core download --allow-root
 
-  # ダウンロード直後に権限を PHP-FPM に合わせる
-  chown -R nobody:nobody "${WP_PATH}"
-  find "${WP_PATH}" -type d -exec chmod 755 {} \;
-  find "${WP_PATH}" -type f -exec chmod 644 {} \;
+#  # ダウンロード直後に権限を PHP-FPM に合わせる
+#  chown -R nobody:nobody "${WP_PATH}"
+#  find "${WP_PATH}" -type d -exec chmod 755 {} \;
+#  find "${WP_PATH}" -type f -exec chmod 644 {} \;
 
   echo "[wp-setup] Creating wp-config.php via wp-cli..."
   wp config create \
@@ -91,17 +90,10 @@ if ! wp core is-installed --allow-root >/dev/null 2>&1; then
   wp config set WP_SITEURL "${WP_URL}" --type=constant --allow-root
   wp config set FS_METHOD direct --type=constant --allow-root
 
-
-#  # X-Forwarded-Proto 経由で HTTPS を認識させるための追記
-#  php <<'PHP'
-#<?php
-#$file = 'wp-config.php';
-#$cfg = file_get_contents($file);
-#$needle = "require_once ABSPATH . 'wp-settings.php';";
-#$insert = "if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {\n    \$_SERVER['HTTPS'] = 'on';\n}\n\n" . $needle;
-#$cfg = str_replace($needle, $insert, $cfg);
-#file_put_contents($file, $cfg);
-#PHP
+  # --- 所有者を PHP-FPM ユーザーに変更 ---
+  chown -R ${PHP_FPM_USER}:${PHP_FPM_GROUP} "${WP_PATH}"
+  find "${WP_PATH}" -type d -exec chmod 755 {} \;
+  find "${WP_PATH}" -type f -exec chmod 644 {} \;
 fi
 
 echo "Starting php-fpm..."
