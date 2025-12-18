@@ -7,9 +7,13 @@
 !.env
 !.htpasswd
 !.htpasswd_admin
+!srcs/
 !srcs/requirements/nginx/conf/nginx.conf
 !srcs/requirements/mariadb/conf/my.cnf
 !srcs/requirements/wordpress/conf/wp-config.php
+!srcs/requirements/static/conf/static.conf
+!srcs/requirements/static/
+
 !README.md
 !USER_DOC.md
 !DEV_DOC.md
