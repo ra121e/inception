@@ -13,6 +13,8 @@
 !srcs/requirements/wordpress/conf/wp-config.php
 !srcs/requirements/static/conf/static.conf
 !srcs/requirements/static/
+!srcs/requirements/adminer/
+
 
 !README.md
 !USER_DOC.md

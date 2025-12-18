@@ -68,19 +68,19 @@ services:
       - inception_network
     restart: always
 
-  # adminer:
-  #   build:
-  #     context: ./requirements/adminer
-  #     dockerfile: Dockerfile
-  #   container_name: adminer
-  #   env_file:
-  #     - .env
-  #   # Adminer can connect to mariadb through the internal network
-  #   ports:
-  #     - "8080:8080"
-  #   networks:
-  #     - inception_network
-  #   restart: always
+  adminer:
+    build:
+      context: ./requirements/adminer
+      dockerfile: Dockerfile
+    container_name: adminer
+    env_file:
+      - .env
+    # Adminer can connect to mariadb through the internal network
+    ports:
+      - "8080:8080"
+    networks:
+      - inception_network
+    restart: always
 
 networks:
   inception_network:
