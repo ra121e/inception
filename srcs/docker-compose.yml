@@ -40,7 +40,7 @@ services:
     container_name: nginx
     build:
       context: ./requirements/nginx
-    image: nginx:alpine
+    image: nginx
     env_file:
       - .env
     volumes:
