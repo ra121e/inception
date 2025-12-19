@@ -1,11 +1,12 @@
 version: '3.7'
+# vesion of docker-compose file was no need in V2, but is required in V1
 
 services:
   mariadb:
     container_name: mariadb
     build:
       context: ./requirements/mariadb
-    image: mariadb:alpine-3.18
+    image: mariadb
     env_file:
       - .env
     secrets:
@@ -21,7 +22,7 @@ services:
     container_name: wordpress
     build:
       context: ./requirements/wordpress
-    image: wordpress:alpine-3.18
+    image: wordpress
     env_file:
       - .env
     secrets:
@@ -39,7 +40,7 @@ services:
     container_name: nginx
     build:
       context: ./requirements/nginx
-    image: nginx:alpine-3.18
+    image: nginx:alpine
     env_file:
       - .env
     volumes:
@@ -53,7 +54,7 @@ services:
     depends_on:
       - wordpress
     restart: unless-stopped
-  
+
   # --- Bonus ---
   static:
     build:
@@ -66,7 +67,7 @@ services:
       - "8081:8081" # Access the static site on this port
     networks:
       - inception_network
-    restart: always
+    restart: unless-stopped
 
   adminer:
     build:
@@ -80,7 +81,7 @@ services:
       - "8080:8080"
     networks:
       - inception_network
-    restart: always
+    restart: unless-stopped
 
 networks:
   inception_network:
