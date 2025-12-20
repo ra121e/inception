@@ -1,4 +1,4 @@
-FROM alpine:3.23
+FROM alpine:3.22
 
 # Install necessary packages: PHP and extensions for Adminer (MySQL/MariaDB driver)
 # Adminer is a single PHP file, so we need PHP-FPM and a minimal web server.

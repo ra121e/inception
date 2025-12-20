@@ -26,6 +26,12 @@ down:
 build:
 	$(DC) -f $(DC_FILE) build
 
+start:
+	$(DC) -f $(DC_FILE) start
+
+stop:
+	$(DC) -f $(DC_FILE) stop
+
 logs:
 	$(DC) -f $(DC_FILE) logs -f
 
