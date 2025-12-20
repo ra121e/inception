@@ -23,49 +23,42 @@ MYSQL_USER_PASSWORD=$(cat "${USER_PWD_FILE}")
 MYSQL_DATABASE="${MYSQL_DATABASE:-wordpress}"
 MYSQL_USER="${MYSQL_USER:-wpuser}"
 
-FIRST_INIT=false
+# 1. データの初期化チェック（ボリュームが空の場合のみ実行）
 if [ ! -d "/var/lib/mysql/mysql" ]; then
-  echo "Initializing MariaDB data directory..."
-  mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql > /dev/null
-  FIRST_INIT=true
-fi
+    echo "Initializing MariaDB data directory..."
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null
 
-echo "Starting MariaDB..."
-# 通常モードでmysqldをバックグラウンド起動
-mysqld --user=mysql --console &
-MYSQLD_PID=$!
+    # 設定用の一時的な起動（& でバックグラウンドへ）
+    mysqld --user=mysql --datadir=/var/lib/mysql --skip-networking &
+    pid="$!"
 
-echo "Waiting for MariaDB to be ready..."
-# 起動待ち
-until mysqladmin ping -uroot --silent; do
-  sleep 1
-done
+    # 起動待ち
+    until mysqladmin ping > /dev/null 2>&1; do
+        sleep 1
+    done
 
-echo "MariaDB is up. Running initialization SQL..."
-
-if [ "$FIRST_INIT" = true ]; then
-  # 1回目だけroot初期化と不要なもの削除
-  mysql -uroot <<-EOSQL
-    -- rootパスワード設定（ローカルからのみ）
-    ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-
-    -- 匿名ユーザー削除
-    DELETE FROM mysql.user WHERE User='';
-
-    -- test DB削除
-    DROP DATABASE IF EXISTS test;
-    DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
-    FLUSH PRIVILEGES;
-EOSQL
-fi
-
-# WP用DB/ユーザーが無ければ作成（idempotentに）
-mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" <<-EOSQL
-  CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    # SQL実行（初期設定、セキュリティ向上、WP用DB作成をすべてここで！）
+    mysql -uroot << EOSQL
+        -- セキュリティ設定
+        ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+        DELETE FROM mysql.user WHERE User='';
+        DROP DATABASE IF EXISTS test;
+        -- WordPress用DB/ユーザー作成
+        CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
   CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_USER_PASSWORD}';
-  GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
-  FLUSH PRIVILEGES;
+        GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
+        FLUSH PRIVILEGES;
 EOSQL
 
-echo "Initialization SQL completed. Bringing mysqld to foreground..."
-wait "$MYSQLD_PID"
+    # 一時的なmysqldを安全に停止
+    kill "$pid"
+    wait "$pid"
+    echo "MariaDB initial configuration completed."
+fi
+
+# ---------------------------------------------------------
+# 【最重要】PID 1 を mysqld に引き継ぐ
+# ---------------------------------------------------------
+echo "Starting MariaDB in foreground..."
+# exec を使うことで、このシェルスクリプトが mysqld プロセスに「変身」します
+exec mysqld --user=mysql --datadir=/var/lib/mysql --console
