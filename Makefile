@@ -4,7 +4,15 @@
 
 DC			:= docker compose
 DC_FILE		:= ./srcs/docker-compose.yml
-DATA_DIR	:= /home/athonda/data
+
+# Keep host bind-mount paths consistent with docker-compose volumes.
+# Source of truth: srcs/.env (LOGIN=<42login>)
+LOGIN		:= $(strip $(shell sed -n 's/^LOGIN=//p' ./srcs/.env | head -n 1))
+ifeq ($(LOGIN),)
+$(error LOGIN is not set. Please set LOGIN in ./srcs/.env (e.g., LOGIN=athonda))
+endif
+
+DATA_DIR	:= /home/$(LOGIN)/data
 DATA_DIR_MARIADB	:= $(DATA_DIR)/mariadb
 DATA_DIR_WORDPRESS	:= $(DATA_DIR)/wordpress
 
