@@ -60,6 +60,7 @@ services:
     build:
       context: ./requirements/static
       dockerfile: Dockerfile
+    image: static
     container_name: static
     env_file:
       - .env
@@ -74,6 +75,7 @@ services:
       context: ./requirements/adminer
       dockerfile: Dockerfile
     container_name: adminer
+    image: adminer
     env_file:
       - .env
     # Adminer can connect to mariadb through the internal network
