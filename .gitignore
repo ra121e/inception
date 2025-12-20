@@ -4,9 +4,6 @@
 !requirements/
 !tools/
 !.gitignore
-!.env
-!.htpasswd
-!.htpasswd_admin
 !srcs/
 !srcs/requirements/nginx/conf/nginx.conf
 !srcs/requirements/mariadb/conf/my.cnf
