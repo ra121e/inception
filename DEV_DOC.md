@@ -89,12 +89,14 @@ Passwords are **not** stored in `.env`.
 From the repository root:
 
 ```bash
-make       # create host data dirs and start the stack
-make up    # build and start the stack
-make down  # stop the stack
-make clean # stop, then remove containers/images/volumes/networks
-make fclean# clean + remove host data directories
-make re    # full rebuild and start
+make        # create host data directories and start the stack
+make up     # start/rebuild the stack in detached mode
+make down   # stop the stack and remove containers (images left)
+make start  # start containers
+make stop   # stop containers
+make clean  # down
+make fclean # clean + remove remove containers/images/volumes/networks
+make re     # clean and rebuild the stack
 ```
 
 Underlying commands use `docker compose -f srcs/docker-compose.yml ...`.

@@ -83,12 +83,14 @@ Key design choices:
 From the project root:
 
 ```bash
-make       # create host data directories and start the stack
-make up    # start/rebuild the stack in detached mode
-make down  # stop the stack
-make clean # stop stack and remove containers/images/volumes/networks
-make fclean# clean + remove host data directories
-make re    # clean and rebuild the stack
+make        # create host data directories and start the stack
+make up     # start/rebuild the stack in detached mode
+make down   # stop the stack and remove containers (images left)
+make start  # start containers
+make stop   # stop containers
+make clean  # down
+make fclean # clean + remove remove containers/images/volumes/networks
+make re     # clean and rebuild the stack
 ```
 
 After `make` or `make up`, the site should be available at:
@@ -103,7 +105,7 @@ For more detailed information on running and administering the stack, see `USER_
 - Docker Compose documentation: https://docs.docker.com/compose/
 - NGINX documentation: https://nginx.org/en/docs/
 - MariaDB documentation: https://mariadb.com/kb/en/
-- WordPress documentation: https://wordpress.org/support/article/
+- WordPress documentation: https://wordpress.org/documentation/
 
 ### AI Usage
 

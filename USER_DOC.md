@@ -42,10 +42,26 @@ This will:
 - Build the Docker images.
 - Start the containers in the background.
 
-### Stop the stack
+### Stop and restart the stack
+
+```bash
+make stop
+```
+
+Stops the running containers defined in `srcs/docker-compose.yml`.
+
+```bash
+make start
+```
+
+Starts the running containers defined in `srcs/docker-compose.yml`.
+
+### Stop and remove the containers
 
 ```bash
 make down
+or
+make clean
 ```
 
 Stops and removes the running containers defined in `srcs/docker-compose.yml`.
@@ -53,22 +69,11 @@ Stops and removes the running containers defined in `srcs/docker-compose.yml`.
 ### Clean up containers, images, volumes, networks
 
 ```bash
-make clean
+make fclean
 ```
 
 - Stops the stack.
 - Removes containers, images, volumes, and networks created by Docker.
-
-### Full reset (including host data)
-
-```bash
-make fclean
-```
-
-- Does everything `make clean` does.
-- Additionally removes the host data directories under `/home/LOGIN/data`.
-
-After `make fclean`, all WordPress data and database contents are lost.
 
 ## Accessing the Website and Admin Panel
 
