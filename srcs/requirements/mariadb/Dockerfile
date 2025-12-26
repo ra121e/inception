@@ -10,6 +10,8 @@ COPY ./conf/50-server.cnf /etc/my.cnf
 COPY ./tools/setup_db.sh /usr/local/bin/setup_db.sh
 RUN chmod +x /usr/local/bin/setup_db.sh
 
+EXPOSE 3306
+
 VOLUME /var/lib/mysql
 
 CMD ["/usr/local/bin/setup_db.sh"]

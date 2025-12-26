@@ -12,4 +12,6 @@ RUN chmod +x /usr/local/bin/init_ssl.sh
 # ビルド時に自己署名証明書を生成（本番ではボリュームマウントを推奨）
 RUN /usr/local/bin/init_ssl.sh
 
+EXPOSE 443
+
 CMD ["nginx", "-g", "daemon off;"]

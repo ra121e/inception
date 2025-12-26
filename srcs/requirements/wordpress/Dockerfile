@@ -31,5 +31,7 @@ RUN chmod +x /usr/local/bin/setup_wordpress.sh
 
 WORKDIR /var/www/html
 
+EXPOSE 9000
+
 ENTRYPOINT ["/usr/local/bin/setup_wordpress.sh"]
 CMD ["php-fpm83", "-F"]
