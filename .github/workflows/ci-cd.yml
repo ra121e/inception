@@ -11,34 +11,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Create secrets directory
-        run: mkdir -p secrets
-
-      - name: Create credentials and secret files
+      - name: Setup environment
         run: |
+          # 1. 必要なディレクトリをすべて作成
+          mkdir -p srcs/data/mariadb srcs/data/wordpress secrets
+
+          # 2. Secretsの配置
           echo "${{ secrets.CREDENTIALS }}" > secrets/credentials.txt
           echo "${{ secrets.DB_ROOT_PASSWORD }}" > secrets/db_root_password.txt
           echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
 
-      - name: Create .env file for CI
-        working-directory: srcs
-        run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
-          # CI環境(Runner)専用のパスを注入
-          echo "DATA_PATH=${{ github.workspace }}/data" >> .env
-          # ボリュームマウント用のディレクトリ作成
-          mkdir -p ${{ github.workspace }}/data/mariadb
-          mkdir -p ${{ github.workspace }}/data/wordpress
+          # 3. .envの配置（中身からLOGINやDATA_PATHの依存を消すのが理想）
+          echo "${{ secrets.ENV_FILE }}" > srcs/.env
 
-      - name: Build Docker Compose images
-        working-directory: srcs
-        run: docker compose build
-
-      - name: Test Docker Compose
-        working-directory: srcs
+      - name: Build and Test
         run: |
-          # テスト実行（DATA_PATHが正しくマウントされれば成功する）
-          docker compose run --rm wordpress echo "WordPress container built and mounted successfully"
+          # ルートから -f でファイルを指定。working-directoryは使わない
+          docker compose -f srcs/docker-compose.yml --env-file srcs/.env build
+          docker compose -f srcs/docker-compose.yml --env-file srcs/.env run --rm wordpress echo "Success"
 
   deploy:
     needs: build-test
@@ -51,25 +41,15 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd /home/${{ secrets.EC2_USER }}/inception/srcs
+            # EC2上のプロジェクトルートへ移動
+            cd ~/inception
 
-            # 既存の .env をクリアして Secrets から再生成
-            echo "${{ secrets.ENV_FILE }}" > .env
+            # ディレクトリ準備
+            mkdir -p srcs/data/mariadb srcs/data/wordpress secrets
 
-            # 本番環境(EC2)専用のパスを注入
-            # ※ athondaさんの環境に合わせて固定パスを指定
-            echo "DATA_PATH=/home/athonda/data" >> .env
-
-            # Secretsファイルの生成
-            mkdir -p ../secrets
-            echo "${{ secrets.CREDENTIALS }}" > ../secrets/credentials.txt
-            echo "${{ secrets.DB_ROOT_PASSWORD }}" > ../secrets/db_root_password.txt
-            echo "${{ secrets.DB_PASSWORD }}" > ../secrets/db_password.txt
-
-            # ディレクトリの存在確認（念のため）
-            mkdir -p /home/athonda/data/mariadb
-            mkdir -p /home/athonda/data/wordpress
+            # ファイル更新（git pull等の代わり）
+            echo "${{ secrets.ENV_FILE }}" > srcs/.env
+            echo "${{ secrets.CREDENTIALS }}" > secrets/credentials.txt
 
             # デプロイ実行
-            docker compose pull
-            docker compose up -d --build
+            docker compose -f srcs/docker-compose.yml up -d --build
