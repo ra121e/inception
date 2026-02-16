@@ -16,6 +16,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Create .env file
+        working-directory: srcs
         run: echo "${{ secrets.ENV_FILE }}" > .env
 
       - name: Create secrets directory
@@ -31,12 +32,12 @@ jobs:
 
       - name: Build Docker Compose images
         working-directory: srcs
-        run: docker compose -f srcs/docker-compose.yml build
+        run: docker compose build
 
       # オプション: 簡単なテスト（コンテナ起動確認）
       - name: Test Docker Compose
         working-directory: srcs
-        run: docker compose -f srcs/docker-compose.yml run --rm wordpress echo "WordPress container built successfully"
+        run: docker compose run --rm wordpress echo "WordPress container built successfully"
 
   deploy:
     needs: build-test
