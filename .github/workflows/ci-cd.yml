@@ -58,6 +58,23 @@ jobs:
               REPO_URL="https://github.com/${{ github.repository }}.git"
             fi
 
+            # SSH URL を使う場合は GitHub の host key を事前登録
+            if echo "${REPO_URL}" | grep -Eq '^(git@github\.com:|ssh://git@github\.com/)'; then
+              mkdir -p "$HOME/.ssh"
+              chmod 700 "$HOME/.ssh"
+              ssh-keyscan -t ed25519,ecdsa,rsa github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null
+              chmod 644 "$HOME/.ssh/known_hosts"
+
+              # EC2 側に GitHub 用秘密鍵がある前提。無い/権限不足はここで明示的に落とす
+              if ! ssh -o BatchMode=yes -o ConnectTimeout=10 -T git@github.com >/tmp/github_ssh_check.log 2>&1; then
+                if grep -q "Host key verification failed" /tmp/github_ssh_check.log; then
+                  echo "GitHub host key verification failed on EC2."
+                  cat /tmp/github_ssh_check.log
+                  exit 1
+                fi
+              fi
+            fi
+
             BRANCH="${{ github.ref_name }}"
 
             # コード同期（存在すれば pull、なければ clone）
