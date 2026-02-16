@@ -5,6 +5,7 @@
 !tools/
 !.gitignore
 !srcs/
+!.github/
 
 
 !README.md
