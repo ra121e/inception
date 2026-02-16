@@ -30,10 +30,12 @@ jobs:
           echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
 
       - name: Build Docker Compose images
+        working-directory: srcs
         run: docker compose -f srcs/docker-compose.yml build
 
       # オプション: 簡単なテスト（コンテナ起動確認）
       - name: Test Docker Compose
+        working-directory: srcs
         run: docker compose -f srcs/docker-compose.yml run --rm wordpress echo "WordPress container built successfully"
 
   deploy:
