@@ -19,6 +19,12 @@ jobs:
         working-directory: srcs
         run: echo "${{ secrets.ENV_FILE }}" > .env
 
+      - name: Prepare volumes for CI
+        run: |
+          sudo mkdir -p /home/runner/data/mariadb
+          sudo mkdir -p /home/runner/data/wordpress
+          sudo chown -R runner:runner /home/runner/data
+
       - name: Create secrets directory
         run: mkdir -p secrets
 
