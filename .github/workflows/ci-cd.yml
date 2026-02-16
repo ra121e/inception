@@ -30,11 +30,11 @@ jobs:
           echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
 
       - name: Build Docker Compose images
-        run: docker-compose build
+        run: docker compose build
 
       # オプション: 簡単なテスト（コンテナ起動確認）
       - name: Test Docker Compose
-        run: docker-compose run --rm wordpress echo "WordPress container built successfully"
+        run: docker compose run --rm wordpress echo "WordPress container built successfully"
 
   deploy:
     needs: build-test
@@ -55,5 +55,5 @@ jobs:
             echo "${{ secrets.DB_ROOT_PASSWORD }}" > secrets/db_root_password.txt
             echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
             # Docker Compose を起動
-            docker-compose pull
-            docker-compose up -d
+            docker compose pull
+            docker compose up -d
