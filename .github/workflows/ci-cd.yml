@@ -26,7 +26,10 @@ jobs:
 
       - name: Build and Test
         run: |
+          export DATA_PATH="${{ github.workspace }}/srcs/data"
+
           # ルートから -f でファイルを指定。working-directoryは使わない
+          # .envファイルのパスも明示する
           docker compose -f srcs/docker-compose.yml --env-file srcs/.env build
           docker compose -f srcs/docker-compose.yml --env-file srcs/.env run --rm wordpress echo "Success"
 
@@ -50,6 +53,8 @@ jobs:
             # ファイル更新（git pull等の代わり）
             echo "${{ secrets.ENV_FILE }}" > srcs/.env
             echo "${{ secrets.CREDENTIALS }}" > secrets/credentials.txt
+
+            export DATA_PATH="$(pwd)/srcs/data"
 
             # デプロイ実行
             docker compose -f srcs/docker-compose.yml up -d --build
