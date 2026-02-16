@@ -43,6 +43,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
+          command_timeout: 45m
+          script_stop: true
           script: |
             set -e
 
@@ -106,4 +108,8 @@ jobs:
             export DATA_PATH="$(pwd)/srcs/data"
 
             # デプロイ実行
-            docker compose -f srcs/docker-compose.yml --env-file srcs/.env up -d --build
+            echo "[deploy] building images..."
+            docker compose -f srcs/docker-compose.yml --env-file srcs/.env build
+
+            echo "[deploy] starting services..."
+            docker compose -f srcs/docker-compose.yml --env-file srcs/.env up -d --no-build
