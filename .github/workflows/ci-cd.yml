@@ -44,8 +44,38 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # EC2上のプロジェクトルートへ移動
-            cd ~/inception
+            set -e
+
+            # EC2上のプロジェクトルート
+            APP_DIR="${{ secrets.EC2_APP_DIR }}"
+            if [ -z "${APP_DIR}" ]; then
+              APP_DIR="$HOME/inception"
+            fi
+
+            # クローン元（private リポジトリなら EC2_REPO_URL に SSH URL を設定）
+            REPO_URL="${{ secrets.EC2_REPO_URL }}"
+            if [ -z "${REPO_URL}" ]; then
+              REPO_URL="https://github.com/${{ github.repository }}.git"
+            fi
+
+            BRANCH="${{ github.ref_name }}"
+
+            # コード同期（存在すれば pull、なければ clone）
+            if [ -d "${APP_DIR}/.git" ]; then
+              cd "${APP_DIR}"
+              git fetch origin "${BRANCH}"
+              git checkout "${BRANCH}"
+              git pull --ff-only origin "${BRANCH}"
+            else
+              mkdir -p "$(dirname "${APP_DIR}")"
+              git clone --depth 1 --branch "${BRANCH}" "${REPO_URL}" "${APP_DIR}"
+              cd "${APP_DIR}"
+            fi
+
+            if [ ! -f "${APP_DIR}/srcs/docker-compose.yml" ]; then
+              echo "srcs/docker-compose.yml not found in ${APP_DIR}. Check EC2_APP_DIR and EC2_REPO_URL."
+              exit 1
+            fi
 
             # ディレクトリ準備
             mkdir -p srcs/data/mariadb srcs/data/wordpress secrets
@@ -53,8 +83,10 @@ jobs:
             # ファイル更新（git pull等の代わり）
             echo "${{ secrets.ENV_FILE }}" > srcs/.env
             echo "${{ secrets.CREDENTIALS }}" > secrets/credentials.txt
+            echo "${{ secrets.DB_ROOT_PASSWORD }}" > secrets/db_root_password.txt
+            echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
 
             export DATA_PATH="$(pwd)/srcs/data"
 
             # デプロイ実行
-            docker compose -f srcs/docker-compose.yml up -d --build
+            docker compose -f srcs/docker-compose.yml --env-file srcs/.env up -d --build
