@@ -1,6 +1,3 @@
-version: '3.7'
-# vesion of docker-compose file was no need in V2, but is required in V1
-
 services:
   mariadb:
     container_name: mariadb
@@ -14,6 +11,12 @@ services:
       - db_password
     volumes:
       - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$(cat /run/secrets/db_root_password) --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
     networks:
       - inception_network
     restart: unless-stopped
@@ -33,7 +36,8 @@ services:
     networks:
       - inception_network
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     restart: unless-stopped
 
   nginx:
