@@ -28,15 +28,20 @@ jobs:
         run: |
           export DATA_PATH="${{ github.workspace }}/srcs/data"
 
-          # ルートから -f でファイルを指定。working-directoryは使わない
-          # .envファイルのパスも明示する
-          docker compose -f srcs/docker-compose.yml --env-file srcs/.env build
-          docker compose -f srcs/docker-compose.yml --env-file srcs/.env run --rm wordpress echo "Success"
+          # 全サービスをビルドして起動
+          docker compose -f srcs/docker-compose.yml --env-file srcs/.env up -d --build
 
       - name: Health check (Web access test)
         # ここを分けることで「意味論の検証」が独立する
         run: |
-          curl --fail --retry 10 --retry-delay 5 --retry-all-errors https://localhost
+          # nginx (HTTPS / self-signed cert)
+          curl -k --fail --retry 10 --retry-delay 5 --retry-all-errors https://localhost
+
+          # adminer (HTTP)
+          curl --fail --retry 10 --retry-delay 5 --retry-all-errors http://localhost:8080
+
+          # static (HTTP)
+          curl --fail --retry 10 --retry-delay 5 --retry-all-errors http://localhost:8081
 
   deploy:
     needs: build-test
