@@ -33,6 +33,11 @@ jobs:
           docker compose -f srcs/docker-compose.yml --env-file srcs/.env build
           docker compose -f srcs/docker-compose.yml --env-file srcs/.env run --rm wordpress echo "Success"
 
+      - name: Health check (Web access test)
+        # ここを分けることで「意味論の検証」が独立する
+        run: |
+          curl --fail --retry 10 --retry-delay 5 --retry-all-errors http://localhost
+
   deploy:
     needs: build-test
     runs-on: ubuntu-latest
