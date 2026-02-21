@@ -64,13 +64,10 @@ jobs:
             if [ "${APP_DIR#~/}" != "${APP_DIR}" ]; then
               APP_DIR="$HOME/${APP_DIR#~/}"
             fi
-            case "${APP_DIR}" in
-              /*) ;;
-              *)
-                echo "EC2_APP_DIR must be an absolute path (or start with ~/)."
-                exit 1
-                ;;
-            esac
+            if [ "${APP_DIR#/}" = "${APP_DIR}" ]; then
+              echo "EC2_APP_DIR must be an absolute path (or start with ~/)."
+              exit 1
+            fi
 
             # クローン元（private リポジトリなら EC2_REPO_URL に SSH URL を設定）
             REPO_URL="${{ secrets.EC2_REPO_URL }}"
