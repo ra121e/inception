@@ -26,8 +26,6 @@ jobs:
 
       - name: Build and Test
         run: |
-          export DATA_PATH="${{ github.workspace }}/srcs/data"
-
           # 全サービスをビルドして起動
           docker compose -f srcs/docker-compose.yml --env-file srcs/.env up -d --build
 
@@ -63,6 +61,16 @@ jobs:
             if [ -z "${APP_DIR}" ]; then
               APP_DIR="$HOME/inception"
             fi
+            if [ "${APP_DIR#~/}" != "${APP_DIR}" ]; then
+              APP_DIR="$HOME/${APP_DIR#~/}"
+            fi
+            case "${APP_DIR}" in
+              /*) ;;
+              *)
+                echo "EC2_APP_DIR must be an absolute path (or start with ~/)."
+                exit 1
+                ;;
+            esac
 
             # クローン元（private リポジトリなら EC2_REPO_URL に SSH URL を設定）
             REPO_URL="${{ secrets.EC2_REPO_URL }}"
@@ -107,19 +115,17 @@ jobs:
             fi
 
             # ディレクトリ準備
-            mkdir -p srcs/data/mariadb srcs/data/wordpress secrets
+            mkdir -p "${APP_DIR}/srcs/data/mariadb" "${APP_DIR}/srcs/data/wordpress" "${APP_DIR}/secrets"
 
             # ファイル更新（git pull等の代わり）
-            echo "${{ secrets.ENV_FILE }}" > srcs/.env
-            echo "${{ secrets.CREDENTIALS }}" > secrets/credentials.txt
-            echo "${{ secrets.DB_ROOT_PASSWORD }}" > secrets/db_root_password.txt
-            echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
-
-            export DATA_PATH="$(pwd)/srcs/data"
+            echo "${{ secrets.ENV_FILE }}" > "${APP_DIR}/srcs/.env"
+            echo "${{ secrets.CREDENTIALS }}" > "${APP_DIR}/secrets/credentials.txt"
+            echo "${{ secrets.DB_ROOT_PASSWORD }}" > "${APP_DIR}/secrets/db_root_password.txt"
+            echo "${{ secrets.DB_PASSWORD }}" > "${APP_DIR}/secrets/db_password.txt"
 
             # デプロイ実行
             echo "[deploy] building images..."
-            docker compose -f srcs/docker-compose.yml --env-file srcs/.env build
+            docker compose -f "${APP_DIR}/srcs/docker-compose.yml" --env-file "${APP_DIR}/srcs/.env" build
 
             echo "[deploy] starting services..."
-            docker compose -f srcs/docker-compose.yml --env-file srcs/.env up -d --no-build
+            docker compose -f "${APP_DIR}/srcs/docker-compose.yml" --env-file "${APP_DIR}/srcs/.env" up -d --no-build
